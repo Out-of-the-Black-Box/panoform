@@ -36,7 +36,7 @@ export default {
           const image = ctx.canvas.toDataURL("image/jpeg");
 
           this.$store.commit("setCurrentImage", image);
-          this.$store.dispatch("addRecentImage", image, fileName);
+          this.$store.dispatch("addRecentImage", { name: fileName, image });
           this.$store.commit("setViewing", true);
         };
 

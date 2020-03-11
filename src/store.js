@@ -112,11 +112,12 @@ let store = new Vuex.Store({
           console.log("Error listing items:", error);
         });
     },
-    addRecentImage({ commit }, data, name) {
+    addRecentImage({ commit }, imageData) {
+      const { image, name } = imageData;
       const imageRef = storageRef.child(BASE_IMAGE_URL + name);
 
       imageRef
-        .putString(data, "data_url")
+        .putString(image, "data_url")
         .then(async snapshot => {
           const downloadURL = await snapshot.ref.getDownloadURL();
           const image = {
