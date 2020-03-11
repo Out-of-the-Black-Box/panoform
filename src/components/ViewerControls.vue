@@ -65,7 +65,10 @@ export default {
     },
     loadImage() {
       this.$store.commit("setCurrentImage", this.image);
-      this.$store.dispatch("addRecentImage", this.image);
+      this.$store.dispatch("addRecentImage", {
+        name: this.image.name,
+        image: this.image
+      });
     },
     closeViewer() {
       this.$store.commit("setViewing", false);
