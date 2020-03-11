@@ -1,8 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import { storage } from "./firebaseConfig.js";
-import { promised } from "q";
-import { get } from "http";
 
 const BASE_IMAGE_URL = "images/";
 const storageRef = storage.ref();
