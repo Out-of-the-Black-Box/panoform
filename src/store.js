@@ -43,8 +43,10 @@ let store = new Vuex.Store({
     addRecentImage(state, image) {
       state.recentImages.unshift(image);
     },
-    removeRecentImage(state, key) {
-      state.recentImages = state.recentImages.filter(image => image.key != key);
+    removeRecentImage(state, name) {
+      state.recentImages = state.recentImages.filter(
+        image => image.name != name
+      );
     },
     setCurrentImage(state, image) {
       state.viewer.currentImage = image;
@@ -82,21 +84,29 @@ let store = new Vuex.Store({
       };
     },
     getRecentImages({ commit }) {
-      var listRef = storageRef.child(BASE_IMAGE_URL);
+      const listRef = storageRef.child(BASE_IMAGE_URL);
 
       listRef
         .listAll()
         .then(async res => {
-          const downloadURLPromises = [];
+          const imagesDataPromises = [];
           res.items.forEach(imageRef => {
-            downloadURLPromises.push(imageRef.getDownloadURL());
+            imagesDataPromises.push(
+              Promise.all([imageRef.getMetadata(), imageRef.getDownloadURL()])
+            );
           });
 
-          const downloadURLs = await Promise.all(downloadURLPromises);
-          const images = downloadURLs.map(url => ({
-            created: getNewJSONDate(),
-            data: url
-          }));
+          const imagesData = await Promise.all(imagesDataPromises);
+          const images = imagesData.map(imageData => {
+            const { name } = imageData[0];
+            const url = imageData[1];
+
+            return {
+              created: getNewJSONDate(),
+              data: url,
+              name
+            };
+          });
 
           commit("setRecentImages", images);
         })
@@ -105,7 +115,7 @@ let store = new Vuex.Store({
         });
     },
     addRecentImage({ commit }, data, name) {
-      let imageRef = storageRef.child(BASE_IMAGE_URL + name);
+      const imageRef = storageRef.child(BASE_IMAGE_URL + name);
 
       imageRef
         .putString(data, "data_url")
@@ -113,7 +123,8 @@ let store = new Vuex.Store({
           const downloadURL = await snapshot.ref.getDownloadURL();
           const image = {
             created: getNewJSONDate(),
-            data: downloadURL
+            data: downloadURL,
+            name
           };
 
           commit("addRecentImage", image);
@@ -121,19 +132,12 @@ let store = new Vuex.Store({
         })
         .catch(error => console.log("Error adding image:", error));
     },
-    removeRecentImage({ commit }, key) {
-      let objStore = db
-        .transaction(["images"], "readwrite")
-        .objectStore("images");
-      let request = objStore.delete(key);
-
-      request.onerror = () => {
-        console.log("Error removing image");
-      };
-
-      request.onsuccess = () => {
-        commit("removeRecentImage", key);
-      };
+    removeRecentImage({ commit }, name) {
+      const imageRef = storageRef.child(BASE_IMAGE_URL + name);
+      imageRef
+        .delete()
+        .then(() => commit("removeRecentImage", name))
+        .catch(error => console.log("Error removing image:", error));
     }
   }
 });
