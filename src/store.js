@@ -67,19 +67,23 @@ let store = new Vuex.Store({
   },
   actions: {
     clearRecentImages({ commit }) {
-      let objStore = db
-        .transaction(["images"], "readwrite")
-        .objectStore("images");
+      const listRef = storageRef.child(BASE_IMAGE_URL);
 
-      let request = objStore.clear();
+      listRef
+        .listAll()
+        .then(async res => {
+          const imageDeletionPromises = [];
+          res.items.forEach(imageRef =>
+            imageDeletionPromises.push(imageRef.delete())
+          );
 
-      request.onerror = () => {
-        console.log("Error clearing database");
-      };
-
-      request.onsuccess = () => {
-        commit("clearRecentImages");
-      };
+          Promise.all(imageDeletionPromises).then(() =>
+            commit("clearRecentImages")
+          );
+        })
+        .catch(error => {
+          console.log("Error listing items:", error);
+        });
     },
     getRecentImages({ commit }) {
       const listRef = storageRef.child(BASE_IMAGE_URL);
