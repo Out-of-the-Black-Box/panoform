@@ -1,5 +1,9 @@
 import Vue from "vue";
 import Vuex from "vuex";
+import { storage } from "./firebaseConfig.js";
+
+const BASE_IMAGE_URL = "images/";
+const storageRef = storage.ref();
 
 Vue.use(Vuex);
 
@@ -81,7 +85,7 @@ let store = new Vuex.Store({
         commit("setRecentImages", request.result);
       };
     },
-    addRecentImage({ commit }, data) {
+    addRecentImage({ commit }, data, name) {
       let image = {
         created: new Date()
           .toJSON()
@@ -90,19 +94,17 @@ let store = new Vuex.Store({
         data: data
       };
 
-      let objStore = db
-        .transaction(["images"], "readwrite")
-        .objectStore("images");
-      let request = objStore.add(image);
+      let imageRef = storageRef.child(BASE_IMAGE_URL + name);
 
-      request.onerror = () => {
-        console.log("Error adding image");
-      };
-
-      request.onsuccess = e => {
-        image.key = e.target.result;
-        commit("addRecentImage", image);
-      };
+      imageRef
+        .putString(data, "data_url")
+        .then(async snapshot => {
+          const downloadURL = await snapshot.ref.getDownloadURL();
+          image.url = downloadURL;
+          commit("addRecentImage", image);
+          console.log("Uploaded a blob or file!");
+        })
+        .catch(err => console.log("Error adding image:", err));
     },
     removeRecentImage({ commit }, key) {
       let objStore = db

@@ -35,7 +35,7 @@ export default {
           const image = ctx.canvas.toDataURL("image/jpeg");
 
           this.$store.commit("setCurrentImage", image);
-          this.$store.dispatch("addRecentImage", image);
+          this.$store.dispatch("addRecentImage", image, name);
           this.$store.commit("setViewing", true);
         };
 
@@ -63,19 +63,19 @@ export default {
 #filepicker + label {
   display: inline-block;
   cursor: pointer;
-//   border: none;
-//   padding: 1rem 2rem;
-//   margin: 0;
-//   text-decoration: none;
-//   font-weight: 600;
-//   background: #ee3933;
-//   border-radius: 0.5rem;
-//   color: #ffffff;
-//   font-family: sans-serif;
-//   font-size: 1rem;
-//   cursor: pointer;
-//   text-align: center;
-//   transition: background 250ms ease-in-out, transform 150ms ease;
+  //   border: none;
+  //   padding: 1rem 2rem;
+  //   margin: 0;
+  //   text-decoration: none;
+  //   font-weight: 600;
+  //   background: #ee3933;
+  //   border-radius: 0.5rem;
+  //   color: #ffffff;
+  //   font-family: sans-serif;
+  //   font-size: 1rem;
+  //   cursor: pointer;
+  //   text-align: center;
+  //   transition: background 250ms ease-in-out, transform 150ms ease;
   -webkit-appearance: none;
   -moz-appearance: none;
 }
