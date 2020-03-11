@@ -24,6 +24,7 @@ export default {
         const img = new Image();
         img.src = event.target.result;
         img.onload = () => {
+          const fileName = file.name;
           const elem = document.createElement("canvas");
           elem.width = width;
           elem.height = height;
@@ -35,7 +36,7 @@ export default {
           const image = ctx.canvas.toDataURL("image/jpeg");
 
           this.$store.commit("setCurrentImage", image);
-          this.$store.dispatch("addRecentImage", image, name);
+          this.$store.dispatch("addRecentImage", image, fileName);
           this.$store.commit("setViewing", true);
         };
 

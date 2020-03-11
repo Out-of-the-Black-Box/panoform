@@ -1,9 +1,17 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import { storage } from "./firebaseConfig.js";
+import { promised } from "q";
+import { get } from "http";
 
 const BASE_IMAGE_URL = "images/";
 const storageRef = storage.ref();
+
+const getNewJSONDate = () =>
+  new Date()
+    .toJSON()
+    .slice(0, 19)
+    .replace("T", " ");
 
 Vue.use(Vuex);
 
@@ -74,37 +82,44 @@ let store = new Vuex.Store({
       };
     },
     getRecentImages({ commit }) {
-      let objStore = db.transaction(["images"]).objectStore("images");
-      let request = objStore.index("created").getAll();
+      var listRef = storageRef.child(BASE_IMAGE_URL);
 
-      request.onerror = () => {
-        console.log("Error getting images");
-      };
+      listRef
+        .listAll()
+        .then(async res => {
+          const downloadURLPromises = [];
+          res.items.forEach(imageRef => {
+            downloadURLPromises.push(imageRef.getDownloadURL());
+          });
 
-      request.onsuccess = () => {
-        commit("setRecentImages", request.result);
-      };
+          const downloadURLs = await Promise.all(downloadURLPromises);
+          const images = downloadURLs.map(url => ({
+            created: getNewJSONDate(),
+            data: url
+          }));
+
+          commit("setRecentImages", images);
+        })
+        .catch(error => {
+          console.log("Error listing items:", error);
+        });
     },
     addRecentImage({ commit }, data, name) {
-      let image = {
-        created: new Date()
-          .toJSON()
-          .slice(0, 19)
-          .replace("T", " "),
-        data: data
-      };
-
       let imageRef = storageRef.child(BASE_IMAGE_URL + name);
 
       imageRef
         .putString(data, "data_url")
         .then(async snapshot => {
           const downloadURL = await snapshot.ref.getDownloadURL();
-          image.url = downloadURL;
+          const image = {
+            created: getNewJSONDate(),
+            data: downloadURL
+          };
+
           commit("addRecentImage", image);
           console.log("Uploaded a blob or file!");
         })
-        .catch(err => console.log("Error adding image:", err));
+        .catch(error => console.log("Error adding image:", error));
     },
     removeRecentImage({ commit }, key) {
       let objStore = db
